@@ -7,8 +7,6 @@ services:
       - "3000:5000"
     environment:
       - NODE_ENV=development
-      - DATABASE_URL=postgresql://webservice:secure_password_2024@postgres:5432/webservice_db
-      - SESSION_SECRET=WebserviceStudio2024SecretKey!@#
     depends_on:
       - postgres
     volumes:
