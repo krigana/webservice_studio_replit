@@ -1,5 +1,5 @@
 <?php
-// GitHub Webhook Handler for Auto-Deployment
+// GitHub Webhook Handler for Auto-Deployment2
 // Цей файл обробляє webhook запити від GitHub та автоматично оновлює сайт
 
 // Налаштування
