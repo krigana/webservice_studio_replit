@@ -2,7 +2,7 @@ import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "@/lib/i18n";
 import { getQueryFn } from "@/lib/queryClient";
-import logoPath from "@assets/webservice31.png";
+// Логотип використовуємо з налаштувань сайту
 import type { SiteSettings, Service } from "@shared/schema";
 import { TranslatedText } from "./translated-text";
 
@@ -38,7 +38,7 @@ export default function Footer() {
           <div className="space-y-4">
             <div className="flex items-center space-x-3">
               <img 
-                src={siteSettings?.logoUrl || logoPath} 
+                src={siteSettings?.logoUrl || ""} 
                 alt={siteSettings?.companyName || "Webservice Studio"} 
                 className="w-12 h-12 object-contain"
               />

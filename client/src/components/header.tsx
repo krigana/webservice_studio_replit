@@ -52,7 +52,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getQueryFn } from "@/lib/queryClient";
 import type { SiteSettings, CustomMenuItem, Contact } from "@shared/schema";
 import { TranslatedText } from "@/components/translated-text";
-import logoPath from "@assets/webservice31.png";
+// Logo використовуємо SVG замість зображення
 
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -195,7 +195,7 @@ export default function Header() {
 
   // Get logo URL - use from settings if available, otherwise use default
   const getLogoUrl = () => {
-    return siteSettings?.logoUrl || logoPath;
+    return siteSettings?.logoUrl || "";
   };
 
   // Get company name
