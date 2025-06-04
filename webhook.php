@@ -4,7 +4,7 @@
 
 // Налаштування
 $secret = 'MyWebsite2024SecureKey!@#'; // Замініть на ваш секретний ключ
-$repo_path = '/home/14bd4f87847e3486/files/public_html'; // Шлях до файлів сайту
+$repo_path = '/home/u11749189/domains/web-service.studio/public_html'; // Шлях до файлів сайту
 $github_repo = 'https://github.com/krigana/webservice_studio_replit.git';
 
 // Логування
