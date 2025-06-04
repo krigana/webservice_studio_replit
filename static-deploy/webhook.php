@@ -1,11 +1,11 @@
 <?php
-// GitHub Webhook Handler for Auto-Deployment2
+// GitHub Webhook Handler for Auto-Deployment
 // Цей файл обробляє webhook запити від GitHub та автоматично оновлює сайт
 
 // Налаштування
-$secret = 'MyWebsite2024SecureKey!@#'; // Замініть на ваш секретний ключ
-$repo_path = '/home/u11749189/domains/web-service.studio/public_html'; // Шлях до файлів сайту
-$github_repo = 'https://github.com/krigana/webservice_studio_replit.git';
+$secret = 'MyWebsite2024SecureKey!@#'; // Ваш секретний ключ
+$repo_path = '/home/u11749189/domains/web-service.studio/public_html'; // Правильний шлях
+$github_repo = 'https://github.com/KryhanAndrii/webservice_studio_replit.git';
 
 // Логування
 function writeLog($message) {

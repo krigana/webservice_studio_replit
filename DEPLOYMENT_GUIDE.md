@@ -1,149 +1,249 @@
-# Посібник розгортання на Хостингер
+# Webservice Studio - Повний Deployment Guide
 
-## Підготовка проекту
+## Вимоги до сервера
 
-### 1. Створення архіву проекту
-Створіть архів усіх файлів проекту:
+### Мінімальні характеристики VPS/Cloud сервера:
+- **CPU**: 2 vCPU
+- **RAM**: 4 GB
+- **Storage**: 20 GB SSD
+- **OS**: Ubuntu 20.04+ / CentOS 8+ / Debian 11+
+- **Network**: Публічний IP адрес
+
+### Рекомендовані провайдери:
+- DigitalOcean (Droplet $20/міс)
+- AWS EC2 (t3.medium)
+- Google Cloud Platform (e2-medium)
+- Vultr ($12/міс)
+- Linode ($12/міс)
+
+## Кроки розгортання
+
+### 1. Підготовка сервера
+
 ```bash
-zip -r webservice-studio.zip . -x "node_modules/*" ".git/*" "dist/*"
+# Оновлення системи
+sudo apt update && sudo apt upgrade -y
+
+# Встановлення Docker
+curl -fsSL https://get.docker.com -o get-docker.sh
+sudo sh get-docker.sh
+sudo usermod -aG docker $USER
+
+# Встановлення Docker Compose
+sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+
+# Перезавантаження для застосування змін
+sudo reboot
 ```
 
-### 2. Збірка проекту локально (опціонально)
+### 2. Завантаження проекту
+
 ```bash
-npm run build
+# Клонування з GitHub
+git clone https://github.com/krigana/webservice_studio_replit.git
+cd webservice_studio_replit
+
+# Або завантаження архіву
+wget https://github.com/krigana/webservice_studio_replit/archive/main.zip
+unzip main.zip
+cd webservice_studio_replit-main
 ```
 
-## Налаштування на Хостингер
+### 3. Налаштування SSL сертифікатів
 
-### 1. Створення бази даних PostgreSQL
-1. Увійдіть в панель управління Хостингер
-2. Перейдіть в розділ "Бази даних" → "PostgreSQL"
-3. Створіть нову базу даних
-4. Запишіть дані для підключення:
-   - Хост
-   - Порт
-   - Ім'я бази даних
-   - Користувач
-   - Пароль
-
-### 2. Завантаження файлів
-1. Через File Manager або FTP завантажте всі файли проекту
-2. Розпакуйте архів в корінь домену
-
-### 3. Налаштування Node.js додатку
-1. В панелі управління знайдіть розділ "Node.js"
-2. Створіть новий додаток:
-   - Entry point: `dist/index.js`
-   - Node.js version: 18 або новіша
-   - Startup file: `dist/index.js`
-
-### 4. Встановлення залежностей
-В терміналі Хостингер виконайте:
+#### Опція A: Let's Encrypt (безкоштовно)
 ```bash
-npm install --production
-npm run build
+# Встановлення Certbot
+sudo apt install certbot
+
+# Отримання сертифікату
+sudo certbot certonly --standalone -d web-service.studio -d www.web-service.studio
+
+# Копіювання сертифікатів
+mkdir -p ssl
+sudo cp /etc/letsencrypt/live/web-service.studio/fullchain.pem ssl/web-service.studio.crt
+sudo cp /etc/letsencrypt/live/web-service.studio/privkey.pem ssl/web-service.studio.key
+sudo chmod 644 ssl/*
 ```
 
-### 5. Налаштування змінних середовища
-Створіть файл `.env` з наступними змінними:
-
-```env
-NODE_ENV=production
-PORT=3000
-
-# База даних (замініть на ваші дані)
-DATABASE_URL=postgresql://username:password@hostname:port/database
-PGHOST=your_db_host
-PGPORT=5432
-PGUSER=your_db_user
-PGPASSWORD=your_db_password
-PGDATABASE=your_db_name
-
-# Google APIs
-GOOGLE_MAPS_API_KEY=your_google_maps_api_key
-GOOGLE_TRANSLATE_API_KEY=your_google_translate_api_key
-
-# PayPal
-PAYPAL_CLIENT_ID=your_paypal_client_id
-PAYPAL_CLIENT_SECRET=your_paypal_client_secret
-
-# Telegram
-TELEGRAM_BOT_TOKEN=your_telegram_bot_token
-TELEGRAM_CHAT_ID=your_telegram_chat_id
-```
-
-### 6. Ініціалізація бази даних
+#### Опція B: Самопідписаний сертифікат (для тестування)
 ```bash
-npm run db:push
+mkdir -p ssl
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+  -keyout ssl/web-service.studio.key \
+  -out ssl/web-service.studio.crt \
+  -subj "/C=UA/ST=Kyiv/L=Kyiv/O=Webservice Studio/CN=web-service.studio"
 ```
 
-### 7. Запуск додатку
+### 4. Налаштування environment змінних
+
+Відредагуйте `docker-compose.yml` та змініть:
+- `SESSION_SECRET` на унікальний ключ
+- `POSTGRES_PASSWORD` на надійний пароль
+- Додайте API ключі якщо потрібно:
+  - `GOOGLE_TRANSLATE_API_KEY`
+  - `TELEGRAM_BOT_TOKEN`
+  - `PAYPAL_CLIENT_ID`
+  - `PAYPAL_CLIENT_SECRET`
+
+### 5. Запуск додатку
+
 ```bash
-npm start
+# Надання прав на виконання
+chmod +x deploy.sh
+
+# Запуск deployment
+./deploy.sh
 ```
 
-## Налаштування домену
+### 6. Налаштування DNS
 
-### 1. DNS записи
-В налаштуваннях домену додайте:
-- A-запис: `@` → IP адреса сервера
-- CNAME: `www` → `@`
+У панелі управління доменом web-service.studio додайте A-запис:
+```
+Type: A
+Name: @
+Value: [IP_АДРЕСА_СЕРВЕРА]
+TTL: 300
 
-### 2. SSL сертифікат
-Хостингер автоматично видасть SSL сертифікат для домену.
+Type: A  
+Name: www
+Value: [IP_АДРЕСА_СЕРВЕРА]
+TTL: 300
+```
 
-## Важливі API ключі
+### 7. Перевірка роботи
 
-Вам потрібно отримати наступні API ключі:
+Відкрийте в браузері:
+- `https://web-service.studio` - головна сторінка
+- `https://web-service.studio/admin` - адмін панель
 
-### Google Maps API
-1. Перейдіть на https://console.cloud.google.com/
-2. Створіть новий проект або оберіть існуючий
-3. Увімкніть Maps JavaScript API
-4. Створіть API ключ
-5. Обмежте ключ доменом web-service.studio
+**Дані для входу в адмін панель:**
+- Логін: `admin`
+- Пароль: `admin123`
 
-### Google Translate API
-1. В тому ж проекті Google Cloud
-2. Увімкніть Cloud Translation API
-3. Створіть API ключ
+## Керування додатком
 
-### PayPal
-1. Перейдіть на https://developer.paypal.com/
-2. Створіть додаток
-3. Отримайте Client ID та Client Secret
+### Основні команди Docker Compose:
 
-### Telegram Bot
-1. Знайдіть @BotFather в Telegram
-2. Створіть нового бота командою /newbot
-3. Отримайте Bot Token
-4. Додайте бота в групу та отримайте Chat ID
+```bash
+# Перегляд статусу
+docker-compose ps
 
-## Перевірка роботи
+# Перегляд логів
+docker-compose logs -f
 
-1. Відкрийте https://web-service.studio/
-2. Перевірте всі розділи сайту
-3. Протестуйте форми зворотного зв'язку
-4. Увійдіть в адмін панель: https://web-service.studio/admin
-5. Логін: admin, Пароль: admin123
+# Перезапуск
+docker-compose restart
 
-## Підтримка
+# Зупинка
+docker-compose down
 
-Після розгортання рекомендується:
-1. Змінити пароль адміністратора
-2. Налаштувати автоматичні бекапи бази даних
-3. Налаштувати моніторинг сайту
+# Зупинка з видаленням даних
+docker-compose down -v
 
-## Можливі проблеми
+# Оновлення додатку
+git pull
+docker-compose build --no-cache
+docker-compose up -d
+```
 
-### Помилка підключення до бази даних
-- Перевірте правильність DATABASE_URL
-- Переконайтеся, що база даних доступна
+### Backup бази даних:
 
-### Статичні файли не завантажуються
-- Перевірте, чи збудований проект командою `npm run build`
-- Переконайтеся, що папка `dist` містить файли
+```bash
+# Створення backup
+docker-compose exec postgres pg_dump -U webservice webservice_db > backup_$(date +%Y%m%d_%H%M%S).sql
 
-### API не працюють
-- Перевірте правильність API ключів
-- Переконайтеся, що домен додано в налаштування API
+# Відновлення з backup
+docker-compose exec -T postgres psql -U webservice webservice_db < backup_file.sql
+```
+
+## Моніторинг та обслуговування
+
+### Автоматичне оновлення SSL сертифікатів:
+
+```bash
+# Додати в crontab
+sudo crontab -e
+
+# Додати рядок:
+0 2 * * 1 certbot renew && docker-compose restart nginx
+```
+
+### Моніторинг ресурсів:
+
+```bash
+# Використання ресурсів контейнерами
+docker stats
+
+# Розмір дисків
+df -h
+
+# Використання пам'яті
+free -h
+```
+
+## Безпека
+
+### Рекомендації:
+1. Змініть стандартний пароль адміністратора
+2. Налаштуйте firewall (ufw або iptables)
+3. Оновлюйте система регулярно
+4. Використовуйте надійні паролі
+5. Налаштуйте регулярні backup
+
+### Налаштування Firewall:
+
+```bash
+# Встановлення UFW
+sudo ufw enable
+
+# Дозволити необхідні порти
+sudo ufw allow 22/tcp   # SSH
+sudo ufw allow 80/tcp   # HTTP
+sudo ufw allow 443/tcp  # HTTPS
+
+# Заблокувати прямий доступ до бази
+sudo ufw deny 5432/tcp
+```
+
+## Часті проблеми та рішення
+
+### Проблема: Контейнер не запускається
+```bash
+# Перевірка логів
+docker-compose logs app
+
+# Перевірка портів
+sudo netstat -tulpn | grep :80
+```
+
+### Проблема: База даних недоступна
+```bash
+# Перевірка статусу PostgreSQL
+docker-compose exec postgres pg_isready
+
+# Перезапуск бази даних
+docker-compose restart postgres
+```
+
+### Проблема: SSL помилки
+```bash
+# Перевірка сертифікатів
+openssl x509 -in ssl/web-service.studio.crt -text -noout
+
+# Оновлення Nginx конфігурації
+docker-compose restart nginx
+```
+
+## Контакти підтримки
+
+Якщо виникли проблеми з deployment:
+1. Перевірте логи: `docker-compose logs -f`
+2. Переконайтеся що DNS налаштовано правильно
+3. Перевірте що всі порти відкриті в firewall
+4. Зверніться до документації провайдера VPS
+
+---
+
+**Після успішного deployment ваш повноцінний сайт web-service.studio буде працювати з усіма функціями: адмін панель, CMS, блог, багатомовність, PayPal донати, мобільна версія.**
