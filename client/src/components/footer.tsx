@@ -2,7 +2,7 @@ import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "@/lib/i18n";
 import { getQueryFn } from "@/lib/queryClient";
-// Логотип використовуємо з налаштувань сайту
+// Логотип отримуємо з налаштувань сайту
 import type { SiteSettings, Service } from "@shared/schema";
 import { TranslatedText } from "./translated-text";
 

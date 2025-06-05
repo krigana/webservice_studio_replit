@@ -52,7 +52,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getQueryFn } from "@/lib/queryClient";
 import type { SiteSettings, CustomMenuItem, Contact } from "@shared/schema";
 import { TranslatedText } from "@/components/translated-text";
-// Logo використовуємо SVG замість зображення
+// Logo отримуємо з налаштувань сайту
 
 export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
