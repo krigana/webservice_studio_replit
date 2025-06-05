@@ -1,0 +1,292 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 210 40% 98%; /* #F8FAFC */
+  --foreground: 215 20% 15%; /* #1E293B */
+  --muted: 210 40% 96%; /* #F1F5F9 */
+  --muted-foreground: 215 16% 47%; /* #64748B */
+  --popover: 0 0% 100%; /* #FFFFFF */
+  --popover-foreground: 215 20% 15%; /* #1E293B */
+  --card: 0 0% 100%; /* #FFFFFF */
+  --card-foreground: 215 20% 15%; /* #1E293B */
+  --border: 214 32% 91%; /* #E2E8F0 */
+  --input: 214 32% 91%; /* #E2E8F0 */
+  --primary: 192 100% 39%; /* #00a7c7 - Основной бирюзовый цвет */
+  --primary-foreground: 0 0% 100%; /* #FFFFFF */
+  --secondary: 215 28% 17%; /* #1E293B */
+  --secondary-foreground: 210 40% 98%; /* #F8FAFC */
+  --accent: 192 100% 32%; /* #008fb3 - Темнее версия основного цвета */
+  --accent-foreground: 0 0% 100%; /* #FFFFFF */
+  --destructive: 0 84% 60%; /* #EF4444 */
+  --destructive-foreground: 60 9% 98%; /* #FEFEFE */
+  --ring: 192 100% 39%; /* #00a7c7 */
+  --radius: 0.5rem;
+  --chart-1: 192 100% 39%; /* #00a7c7 */
+  --chart-2: 25 95% 70%; /* #feab6b */
+  --chart-3: 245 73% 74%; /* #9693e6 */
+  --chart-4: 0 100% 77%; /* #ff8a8a */
+  --chart-5: 142 76% 36%; /* #10B981 */
+  
+  /* Дополнительные цвета для интерфейса */
+  --orange: 25 95% 70%; /* #feab6b */
+  --purple: 245 73% 74%; /* #9693e6 */
+  --coral: 0 100% 77%; /* #ff8a8a */
+}
+
+/* Скрытие полосы прокрутки */
+.scrollbar-hide {
+  /* IE и Edge */
+  -ms-overflow-style: none;
+  /* Firefox */
+  scrollbar-width: none;
+}
+/* Webkit браузеры (Chrome, Safari, Opera) */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* Стили для ReactQuill редактора - исправление переноса текста */
+.ql-editor {
+  white-space: pre-wrap !important;
+  word-wrap: break-word !important;
+  overflow-wrap: break-word !important;
+  word-break: break-word !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.ql-editor p, .ql-editor div {
+  white-space: pre-wrap !important;
+  word-wrap: break-word !important;
+  overflow-wrap: break-word !important;
+  word-break: break-word !important;
+  max-width: 100% !important;
+}
+
+.ql-container {
+  max-width: 100% !important;
+  overflow: hidden !important;
+}
+
+.dark {
+  --background: 224 71% 4%; /* #0F172A */
+  --foreground: 213 31% 91%; /* #E2E8F0 */
+  --muted: 223 47% 11%; /* #1E293B */
+  --muted-foreground: 215 20% 65%; /* #94A3B8 */
+  --popover: 224 71% 4%; /* #0F172A */
+  --popover-foreground: 213 31% 91%; /* #E2E8F0 */
+  --card: 224 71% 4%; /* #0F172A */
+  --card-foreground: 213 31% 91%; /* #E2E8F0 */
+  --border: 216 34% 17%; /* #334155 */
+  --input: 216 34% 17%; /* #334155 */
+  --primary: 192 100% 39%; /* #00a7c7 */
+  --primary-foreground: 0 0% 100%; /* #FFFFFF */
+  --secondary: 216 34% 17%; /* #334155 */
+  --secondary-foreground: 213 31% 91%; /* #E2E8F0 */
+  --accent: 192 100% 32%; /* #008fb3 */
+  --accent-foreground: 0 0% 100%; /* #FFFFFF */
+  --destructive: 0 63% 31%; /* #B91C1C */
+  --destructive-foreground: 213 31% 91%; /* #E2E8F0 */
+  --ring: 192 100% 39%; /* #00a7c7 */
+  
+  /* Дополнительные цвета для темной темы */
+  --orange: 25 95% 70%; /* #feab6b */
+  --purple: 245 73% 74%; /* #9693e6 */
+  --coral: 0 100% 77%; /* #ff8a8a */
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .gradient-text {
+    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Дополнительные цветовые утилиты */
+  .bg-orange { background-color: hsl(var(--orange)); }
+  .bg-purple { background-color: hsl(var(--purple)); }
+  .bg-coral { background-color: hsl(var(--coral)); }
+  
+  .text-orange { color: hsl(var(--orange)); }
+  .text-purple { color: hsl(var(--purple)); }
+  .text-coral { color: hsl(var(--coral)); }
+  
+  .border-orange { border-color: hsl(var(--orange)); }
+  .border-purple { border-color: hsl(var(--purple)); }
+  .border-coral { border-color: hsl(var(--coral)); }
+
+  .animate-fade-in {
+    animation: fadeIn 0.6s ease-out;
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes fadeIn {
+    from { 
+      opacity: 0; 
+      transform: translateY(20px); 
+    }
+    to { 
+      opacity: 1; 
+      transform: translateY(0); 
+    }
+  }
+
+  @keyframes float {
+    0%, 100% { 
+      transform: translateY(0px); 
+    }
+    50% { 
+      transform: translateY(-10px); 
+    }
+  }
+
+  /* Кастомные стили для кнопок с фиолетовым hover */
+  .btn-custom-hover {
+    transition: all 0.2s ease-in-out;
+  }
+
+  .btn-custom-hover:hover {
+    background-color: hsl(var(--orange)) !important;
+    color: white !important;
+    transform: translateY(-1px);
+  }
+
+  /* Переопределение для основных кнопок */
+  .bg-primary:hover {
+    background-color: hsl(var(--orange)) !important;
+  }
+
+  /* Стили для изображений в содержимом статей */
+  .prose img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin: 16px 0;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Стили для содержимого статей */
+  .prose {
+    color: rgb(51 65 85);
+    line-height: 1.75;
+  }
+
+  .prose h1 {
+    font-size: 2.25rem;
+    font-weight: 700;
+    margin-top: 0;
+    margin-bottom: 2rem;
+    color: rgb(15 23 42);
+  }
+
+  .prose h2 {
+    font-size: 1.875rem;
+    font-weight: 600;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    color: rgb(15 23 42);
+  }
+
+  .prose h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+    color: rgb(15 23 42);
+  }
+
+  .prose p {
+    margin-bottom: 1.25rem;
+  }
+
+  .prose strong {
+    font-weight: 600;
+  }
+
+  .prose em {
+    font-style: italic;
+  }
+
+  /* Кастомный размер заголовка для мобильной версии */
+  .text-4-5xl {
+    font-size: 2.75rem; /* между text-4xl (2.25rem) и text-5xl (3rem) */
+    line-height: 1;
+  }
+
+  @media (min-width: 640px) {
+    .text-4-5xl {
+      font-size: 3rem; /* text-5xl */
+    }
+  }
+
+  @media (min-width: 768px) {
+    .text-4-5xl {
+      font-size: 3.75rem; /* text-6xl - оригинальный размер */
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .text-4-5xl {
+      font-size: 4.5rem; /* text-7xl - оригинальный размер для десктопа */
+    }
+  }
+
+  /* Стили для контента блога */
+  .blog-content {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+  }
+
+  .blog-content h1,
+  .blog-content h2,
+  .blog-content h3,
+  .blog-content h4,
+  .blog-content h5,
+  .blog-content h6 {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    max-width: 100%;
+  }
+
+  .blog-content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    margin: 1rem 0;
+    display: block;
+  }
+
+  .blog-content p {
+    margin-bottom: 1rem;
+    line-height: 1.6;
+  }
+
+  .blog-content ul,
+  .blog-content ol {
+    margin: 1rem 0;
+    padding-left: 1.5rem;
+  }
+
+  .blog-content li {
+    margin-bottom: 0.5rem;
+  }
+}
