@@ -1,87 +1,78 @@
 #!/bin/bash
 
 # Webservice Studio Deployment Script
-# This script deploys the full application to any VPS/Cloud server
+# Автоматичний деплоймент на CloudPanel VPS
 
 set -e
 
-echo "🚀 Starting Webservice Studio deployment..."
+echo "🚀 Початок деплойменту Webservice Studio..."
 
-# Check if Docker is installed
+# Перевіряємо чи є Docker
 if ! command -v docker &> /dev/null; then
-    echo "❌ Docker is not installed. Please install Docker first."
-    echo "Visit: https://docs.docker.com/engine/install/"
-    exit 1
+    echo "❌ Docker не встановлено. Встановлюємо..."
+    curl -fsSL https://get.docker.com -o get-docker.sh
+    sh get-docker.sh
+    sudo usermod -aG docker $USER
+    echo "✅ Docker встановлено"
 fi
 
-# Check if Docker Compose is installed
+# Перевіряємо чи є Docker Compose
 if ! command -v docker-compose &> /dev/null; then
-    echo "❌ Docker Compose is not installed. Please install Docker Compose first."
-    echo "Visit: https://docs.docker.com/compose/install/"
-    exit 1
+    echo "❌ Docker Compose не встановлено. Встановлюємо..."
+    sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+    sudo chmod +x /usr/local/bin/docker-compose
+    echo "✅ Docker Compose встановлено"
 fi
 
-# Create necessary directories
-echo "📁 Creating directories..."
+# Зупиняємо поточні контейнери якщо є
+if [ -f docker-compose.yml ]; then
+    echo "🔄 Зупиняємо поточні контейнери..."
+    docker-compose down || true
+fi
+
+# Очищуємо Docker кеш
+echo "🧹 Очищуємо Docker кеш..."
+docker system prune -f || true
+
+# Створюємо папку для uploads
+echo "📁 Створюємо папки..."
 mkdir -p uploads
-mkdir -p ssl
-
-# Set permissions
 chmod 755 uploads
-chmod 700 ssl
 
-# Check if SSL certificates exist
-if [ ! -f "ssl/web-service.studio.crt" ] || [ ! -f "ssl/web-service.studio.key" ]; then
-    echo "⚠️  SSL certificates not found!"
-    echo "Please add your SSL certificates:"
-    echo "  - ssl/web-service.studio.crt"
-    echo "  - ssl/web-service.studio.key"
-    echo ""
-    echo "You can get free SSL certificates from Let's Encrypt:"
-    echo "https://letsencrypt.org/"
-    echo ""
-    echo "For testing, you can create self-signed certificates:"
-    echo "openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ssl/web-service.studio.key -out ssl/web-service.studio.crt"
-    read -p "Continue without SSL? (y/N): " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-        exit 1
-    fi
-fi
-
-# Build and start containers
-echo "🔨 Building Docker containers..."
+# Збираємо та запускаємо контейнери
+echo "🔨 Збираємо Docker образи..."
 docker-compose build --no-cache
 
-echo "🚀 Starting services..."
+echo "🚀 Запускаємо контейнери..."
 docker-compose up -d
 
-# Wait for database to be ready
-echo "⏳ Waiting for database to initialize..."
-sleep 10
+# Чекаємо запуск
+echo "⏳ Чекаємо запуск сервісів..."
+sleep 30
 
-# Check if services are running
-echo "✅ Checking service status..."
+# Перевіряємо статус
+echo "📊 Статус контейнерів:"
 docker-compose ps
 
+echo "📋 Логи додатку:"
+docker-compose logs --tail=20 app
+
 echo ""
-echo "🎉 Deployment completed!"
+echo "✅ Деплоймент завершено!"
 echo ""
-echo "Your application is now running:"
-echo "  - HTTP: http://localhost"
-echo "  - HTTPS: https://localhost"
-echo "  - Database: localhost:5432"
+echo "📍 Додаток доступний за адресою:"
+echo "   http://$(curl -s ifconfig.me):3000"
 echo ""
-echo "Admin credentials:"
-echo "  - Username: admin"
-echo "  - Password: admin123"
+echo "🔧 Адмін панель:"
+echo "   URL: http://$(curl -s ifconfig.me):3000/admin"
+echo "   Логін: admin"
+echo "   Пароль: admin123"
 echo ""
-echo "To view logs: docker-compose logs -f"
-echo "To stop: docker-compose down"
-echo "To restart: docker-compose restart"
+echo "📊 Для перегляду логів:"
+echo "   docker-compose logs -f app"
 echo ""
-echo "🔧 Next steps:"
-echo "1. Point your domain DNS to this server's IP"
-echo "2. Update SSL certificates in ssl/ directory"
-echo "3. Change default admin password in admin panel"
-echo "4. Configure environment variables in docker-compose.yml"
+echo "🔄 Для перезапуску:"
+echo "   docker-compose restart"
+echo ""
+echo "⛔ Для зупинки:"
+echo "   docker-compose down"

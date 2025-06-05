@@ -5,27 +5,20 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install production dependencies only
-RUN npm ci --production
+# Install dependencies
+RUN npm ci
 
-# Copy only necessary source files
-COPY server/ ./server/
-COPY shared/ ./shared/
-COPY drizzle.config.ts ./
-COPY tsconfig.json ./
+# Copy source code
+COPY . .
 
-# Create dist directory and copy pre-built server
-RUN mkdir -p dist
+# Remove attached_assets directory to avoid build errors
+RUN rm -rf attached_assets
 
-# Create uploads directory
-RUN mkdir -p uploads
-
-# Set permissions
-RUN chown -R node:node /app
-USER node
+# Build the application
+RUN npm run build
 
 # Expose port
 EXPOSE 5000
 
-# Start the application directly with tsx
-CMD ["npx", "tsx", "server/index.ts"]
+# Start the application
+CMD ["npm", "start"]

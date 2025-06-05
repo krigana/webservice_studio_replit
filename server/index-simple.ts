@@ -1,69 +1,45 @@
 import express, { type Request, Response, NextFunction } from "express";
-import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
-import { setupDefaultAdmin } from "./setup-admin";
-
-const app = express();
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-
-// Health check - must be first
-app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'OK' });
-});
-
-app.get('/', (req, res) => {
-  if (process.env.NODE_ENV === "production") {
-    res.status(200).json({ status: 'OK', service: 'Webservice Studio' });
-  } else {
-    res.status(200).json({ status: 'OK', mode: 'development' });
-  }
-});
-
-// Serve uploaded files statically
-app.use('/uploads', express.static('client/public/uploads'));
-
-app.use((req, res, next) => {
-  const start = Date.now();
-  const path = req.path;
-  
-  res.on("finish", () => {
-    const duration = Date.now() - start;
-    if (path.startsWith("/api")) {
-      console.log(`${req.method} ${path} ${res.statusCode} in ${duration}ms`);
-    }
-  });
-  
-  next();
-});
+import { registerRoutes } from "./routes-simple";
 
 async function startServer() {
-  try {
-    await setupDefaultAdmin();
-    const server = await registerRoutes(app);
-
-    app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-      const status = err.status || err.statusCode || 500;
-      const message = err.message || "Internal Server Error";
-      res.status(status).json({ message });
-      console.error('Error:', err);
-    });
-
-    if (process.env.NODE_ENV === "development") {
-      await setupVite(app, server);
+  const app = express();
+  
+  // Basic middleware
+  app.use(express.json({ limit: '50mb' }));
+  app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+  
+  // CORS for development
+  app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    if (req.method === 'OPTIONS') {
+      res.sendStatus(200);
     } else {
-      serveStatic(app);
+      next();
     }
+  });
 
-    const port = 5000;
-    server.listen(port, "0.0.0.0", () => {
-      console.log(`Server running on port ${port}`);
+  // Register routes
+  const httpServer = await registerRoutes(app);
+
+  // Basic error handler
+  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+    console.error("Error:", err);
+    res.status(500).json({ 
+      message: "Внутрішня помилка сервера",
+      error: err.message 
     });
-    
-  } catch (error) {
-    console.error('Startup error:', error);
-    process.exit(1);
-  }
+  });
+
+  const port = parseInt(process.env.PORT || '5000', 10);
+  
+  httpServer.listen(port, "0.0.0.0", () => {
+    console.log(`🚀 Webservice Studio API запущено на порту ${port}`);
+  });
 }
 
-startServer();
+startServer().catch((error) => {
+  console.error("Помилка запуску сервера:", error);
+  process.exit(1);
+});

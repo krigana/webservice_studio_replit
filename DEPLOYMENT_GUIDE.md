@@ -1,249 +1,153 @@
-# Webservice Studio - Повний Deployment Guide
+# Повний гід по деплойменту Webservice Studio
 
-## Вимоги до сервера
+## Проблема з базою даних Neon
+База даних Neon на Replit вимкнена ("endpoint is disabled"). Для деплойменту на власний сервер використовуємо PostgreSQL в Docker.
 
-### Мінімальні характеристики VPS/Cloud сервера:
-- **CPU**: 2 vCPU
-- **RAM**: 4 GB
-- **Storage**: 20 GB SSD
-- **OS**: Ubuntu 20.04+ / CentOS 8+ / Debian 11+
-- **Network**: Публічний IP адрес
+## Виправлення помилок з attached_assets
 
-### Рекомендовані провайдери:
-- DigitalOcean (Droplet $20/міс)
-- AWS EC2 (t3.medium)
-- Google Cloud Platform (e2-medium)
-- Vultr ($12/міс)
-- Linode ($12/міс)
-
-## Кроки розгортання
-
-### 1. Підготовка сервера
-
-```bash
-# Оновлення системи
-sudo apt update && sudo apt upgrade -y
-
-# Встановлення Docker
-curl -fsSL https://get.docker.com -o get-docker.sh
-sudo sh get-docker.sh
-sudo usermod -aG docker $USER
-
-# Встановлення Docker Compose
-sudo curl -L "https://github.com/docker/compose/releases/download/v2.20.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-sudo chmod +x /usr/local/bin/docker-compose
-
-# Перезавантаження для застосування змін
-sudo reboot
+### 1. Оновити client/src/components/header.tsx
+Видалити рядок:
+```typescript
+import logoPath from "@assets/webservice31.png";
 ```
 
-### 2. Завантаження проекту
+Замінити:
+```typescript
+return siteSettings?.logoUrl || logoPath;
+```
+На:
+```typescript
+return siteSettings?.logoUrl || "";
+```
 
+### 2. Оновити client/src/components/footer.tsx
+Видалити рядок:
+```typescript
+import logoPath from "@assets/webservice31.png";
+```
+
+Замінити:
+```typescript
+src={siteSettings?.logoUrl || logoPath}
+```
+На:
+```typescript
+src={siteSettings?.logoUrl || ""}
+```
+
+## Файли для деплойменту
+
+### docker-compose.yml
+```yaml
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.simple
+    ports:
+      - "3000:5000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://webservice:secure_password_2024@postgres:5432/webservice_db
+      - SESSION_SECRET=WebserviceStudio2024SecretKey!@#
+    depends_on:
+      - postgres
+    volumes:
+      - ./uploads:/app/uploads
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=webservice_db
+      - POSTGRES_USER=webservice
+      - POSTGRES_PASSWORD=secure_password_2024
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - app
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+```
+
+### Dockerfile.simple
+```dockerfile
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm ci
+
+# Copy source code
+COPY . .
+
+# Remove attached_assets directory to avoid build errors
+RUN rm -rf attached_assets
+
+# Build the application
+RUN npm run build
+
+# Expose port
+EXPOSE 5000
+
+# Start the application
+CMD ["npm", "start"]
+```
+
+## Команди для деплойменту на CloudPanel
+
+1. Оновити репозиторій:
 ```bash
-# Клонування з GitHub
-git clone https://github.com/krigana/webservice_studio_replit.git
 cd webservice_studio_replit
-
-# Або завантаження архіву
-wget https://github.com/krigana/webservice_studio_replit/archive/main.zip
-unzip main.zip
-cd webservice_studio_replit-main
+git add .
+git commit -m "Fix attached_assets dependencies"
+git push origin main
 ```
 
-### 3. Налаштування SSL сертифікатів
-
-#### Опція A: Let's Encrypt (безкоштовно)
+2. На сервері:
 ```bash
-# Встановлення Certbot
-sudo apt install certbot
-
-# Отримання сертифікату
-sudo certbot certonly --standalone -d web-service.studio -d www.web-service.studio
-
-# Копіювання сертифікатів
-mkdir -p ssl
-sudo cp /etc/letsencrypt/live/web-service.studio/fullchain.pem ssl/web-service.studio.crt
-sudo cp /etc/letsencrypt/live/web-service.studio/privkey.pem ssl/web-service.studio.key
-sudo chmod 644 ssl/*
-```
-
-#### Опція B: Самопідписаний сертифікат (для тестування)
-```bash
-mkdir -p ssl
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-  -keyout ssl/web-service.studio.key \
-  -out ssl/web-service.studio.crt \
-  -subj "/C=UA/ST=Kyiv/L=Kyiv/O=Webservice Studio/CN=web-service.studio"
-```
-
-### 4. Налаштування environment змінних
-
-Відредагуйте `docker-compose.yml` та змініть:
-- `SESSION_SECRET` на унікальний ключ
-- `POSTGRES_PASSWORD` на надійний пароль
-- Додайте API ключі якщо потрібно:
-  - `GOOGLE_TRANSLATE_API_KEY`
-  - `TELEGRAM_BOT_TOKEN`
-  - `PAYPAL_CLIENT_ID`
-  - `PAYPAL_CLIENT_SECRET`
-
-### 5. Запуск додатку
-
-```bash
-# Надання прав на виконання
-chmod +x deploy.sh
-
-# Запуск deployment
-./deploy.sh
-```
-
-### 6. Налаштування DNS
-
-У панелі управління доменом web-service.studio додайте A-запис:
-```
-Type: A
-Name: @
-Value: [IP_АДРЕСА_СЕРВЕРА]
-TTL: 300
-
-Type: A  
-Name: www
-Value: [IP_АДРЕСА_СЕРВЕРА]
-TTL: 300
-```
-
-### 7. Перевірка роботи
-
-Відкрийте в браузері:
-- `https://web-service.studio` - головна сторінка
-- `https://web-service.studio/admin` - адмін панель
-
-**Дані для входу в адмін панель:**
-- Логін: `admin`
-- Пароль: `admin123`
-
-## Керування додатком
-
-### Основні команди Docker Compose:
-
-```bash
-# Перегляд статусу
-docker-compose ps
-
-# Перегляд логів
-docker-compose logs -f
-
-# Перезапуск
-docker-compose restart
-
-# Зупинка
+cd webservice_studio_replit
+git pull origin main
 docker-compose down
-
-# Зупинка з видаленням даних
-docker-compose down -v
-
-# Оновлення додатку
-git pull
+docker system prune -f
 docker-compose build --no-cache
 docker-compose up -d
 ```
 
-### Backup бази даних:
-
+3. Перевірити статус:
 ```bash
-# Створення backup
-docker-compose exec postgres pg_dump -U webservice webservice_db > backup_$(date +%Y%m%d_%H%M%S).sql
-
-# Відновлення з backup
-docker-compose exec -T postgres psql -U webservice webservice_db < backup_file.sql
+docker-compose ps
+docker-compose logs -f app
 ```
 
-## Моніторинг та обслуговування
+## Доступ до додатку
+- Frontend + API: http://IP_СЕРВЕРА:3000
+- API тільки: http://IP_СЕРВЕРА:3000/api
+- PostgreSQL: IP_СЕРВЕРА:5432
 
-### Автоматичне оновлення SSL сертифікатів:
+## Адмін панель
+- URL: http://IP_СЕРВЕРА:3000/admin
+- Логін: admin
+- Пароль: admin123
 
-```bash
-# Додати в crontab
-sudo crontab -e
-
-# Додати рядок:
-0 2 * * 1 certbot renew && docker-compose restart nginx
-```
-
-### Моніторинг ресурсів:
-
-```bash
-# Використання ресурсів контейнерами
-docker stats
-
-# Розмір дисків
-df -h
-
-# Використання пам'яті
-free -h
-```
-
-## Безпека
-
-### Рекомендації:
-1. Змініть стандартний пароль адміністратора
-2. Налаштуйте firewall (ufw або iptables)
-3. Оновлюйте система регулярно
-4. Використовуйте надійні паролі
-5. Налаштуйте регулярні backup
-
-### Налаштування Firewall:
-
-```bash
-# Встановлення UFW
-sudo ufw enable
-
-# Дозволити необхідні порти
-sudo ufw allow 22/tcp   # SSH
-sudo ufw allow 80/tcp   # HTTP
-sudo ufw allow 443/tcp  # HTTPS
-
-# Заблокувати прямий доступ до бази
-sudo ufw deny 5432/tcp
-```
-
-## Часті проблеми та рішення
-
-### Проблема: Контейнер не запускається
-```bash
-# Перевірка логів
-docker-compose logs app
-
-# Перевірка портів
-sudo netstat -tulpn | grep :80
-```
-
-### Проблема: База даних недоступна
-```bash
-# Перевірка статусу PostgreSQL
-docker-compose exec postgres pg_isready
-
-# Перезапуск бази даних
-docker-compose restart postgres
-```
-
-### Проблема: SSL помилки
-```bash
-# Перевірка сертифікатів
-openssl x509 -in ssl/web-service.studio.crt -text -noout
-
-# Оновлення Nginx конфігурації
-docker-compose restart nginx
-```
-
-## Контакти підтримки
-
-Якщо виникли проблеми з deployment:
-1. Перевірте логи: `docker-compose logs -f`
-2. Переконайтеся що DNS налаштовано правильно
-3. Перевірте що всі порти відкриті в firewall
-4. Зверніться до документації провайдера VPS
-
----
-
-**Після успішного deployment ваш повноцінний сайт web-service.studio буде працювати з усіма функціями: адмін панель, CMS, блог, багатомовність, PayPal донати, мобільна версія.**
+Це рішення усуває всі залежності від attached_assets файлів та забезпечує стабільний деплоймент з PostgreSQL базою даних.
