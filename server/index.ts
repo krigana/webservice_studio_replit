@@ -9,7 +9,21 @@ app.use(express.urlencoded({ extended: false, limit: '50mb' }));
 
 // Health check - must be first
 app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'OK' });
+  res.status(200).json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    env: process.env.NODE_ENV,
+    database: !!process.env.DATABASE_URL
+  });
+});
+
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(),
+    env: process.env.NODE_ENV,
+    database: !!process.env.DATABASE_URL
+  });
 });
 
 // Serve uploaded files statically
@@ -47,7 +61,7 @@ async function startServer() {
       serveStatic(app);
     }
 
-    const port = 5000;
+    const port = parseInt(process.env.PORT || '5000');
     server.listen(port, "0.0.0.0", () => {
       console.log(`Server running on port ${port}`);
     });
