@@ -18,8 +18,15 @@ import { MenuManagement } from "@/components/menu-management";
 import AdminCredentialsModal from "@/components/admin-credentials-modal";
 import { insertProjectSchema, insertServiceSchema, insertBlogPostSchema, insertSiteSettingsSchema } from "@shared/schema";
 import type { InsertProject, Project, InsertService, Service, InsertBlogPost, BlogPost, InsertSiteSettings, SiteSettings } from "@shared/schema";
-import ReactQuill from 'react-quill';
-import 'react-quill/dist/quill.snow.css';
+// Тимчасово замінюємо ReactQuill на простий textarea для збірки
+const ReactQuill = ({ value, onChange, placeholder }: any) => (
+  <textarea 
+    value={value}
+    onChange={(e) => onChange(e.target.value)}
+    placeholder={placeholder}
+    className="w-full min-h-[200px] p-3 border rounded-md"
+  />
+);
 
 interface CMSPanelProps {
   isOpen: boolean;

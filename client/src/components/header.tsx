@@ -228,11 +228,15 @@ export default function Header() {
       <nav className="container mx-auto px-6 py-4">
         <div className="flex items-center justify-between">
           <Link href="/" className="flex items-center space-x-3">
-            <img 
-              src={getLogoUrl()} 
-              alt={getCompanyName()} 
-              className="w-14 h-14 object-contain"
-            />
+            {siteSettings?.logoUrl ? (
+              <img 
+                src={siteSettings.logoUrl} 
+                alt={getCompanyName()} 
+                className="w-14 h-14 object-contain"
+              />
+            ) : (
+              <DonutIcon className="w-14 h-14 text-primary" />
+            )}
             <div style={{ 
               fontSize: '1rem',
               lineHeight: '1.2',

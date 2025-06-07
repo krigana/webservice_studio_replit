@@ -2,9 +2,11 @@ import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "@/lib/i18n";
 import { getQueryFn } from "@/lib/queryClient";
-// Логотип використовуємо з налаштувань сайту
 import type { SiteSettings, Service } from "@shared/schema";
 import { TranslatedText } from "./translated-text";
+import { DonutIcon } from "lucide-react";
+
+
 
 export default function Footer() {
   const { t, language } = useTranslation();
@@ -37,11 +39,15 @@ export default function Footer() {
         <div className="grid md:grid-cols-4 gap-8">
           <div className="space-y-4">
             <div className="flex items-center space-x-3">
-              <img 
-                src={siteSettings?.logoUrl || ""} 
-                alt={siteSettings?.companyName || "Webservice Studio"} 
-                className="w-12 h-12 object-contain"
-              />
+              {siteSettings?.logoUrl ? (
+                <img 
+                  src={siteSettings.logoUrl} 
+                  alt={siteSettings?.companyName || "Webservice Studio"} 
+                  className="w-12 h-12 object-contain"
+                />
+              ) : (
+                <DonutIcon className="w-12 h-12 text-primary" />
+              )}
               <div style={{ 
                 fontSize: '1rem',
                 lineHeight: '1.2',
